@@ -5,32 +5,38 @@ import org.ninjware.binder.model.User;
 import org.ninjware.binder.model.UserDTO;
 
 import javax.inject.Singleton;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
+import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static java.time.temporal.ChronoUnit.DAYS;
-import static java.util.Objects.isNull;
+import static javax.transaction.Transactional.TxType.REQUIRED;
+import static javax.transaction.Transactional.TxType.SUPPORTS;
 import static org.ninjaware.binder.rest.UserConstants.SYSTEM_USER;
 
 @Singleton
 public class UserService {
 
-    private static Map<String, User> users = new HashMap<>();
+    @PersistenceContext
+    EntityManager entityManager;
 
-    User getUserById(String id, boolean includeDeleted) {
-        User user = users.get(id);
-        if (isNull(user)) {
-            return null;
-        }
-        if (!includeDeleted && user.getStatus().equals(UserStatus.Deleted)) {
-            return null;
-        }
-        return users.get(id);
+
+    @Transactional(SUPPORTS)
+    Optional<User> findUserById(String id, boolean includDelete) {
+        TypedQuery<User> query = entityManager.createQuery("SELECT u FROM User u WHERE u.id=:id", User.class);
+        query.setParameter("id", id);
+        return query.getResultStream().findFirst();
     }
 
+
+    @Transactional(REQUIRED)
     User createUser(UserDTO dto) {
         User user = User.builder()
                 .createdAt(LocalDateTime.now())
@@ -43,29 +49,34 @@ public class UserService {
                 .passwordChangeRequired(true)
                 .status(UserStatus.Active)
                 .build();
-        users.put(user.getId(), user);
+        entityManager.persist(user);
         return user;
     }
 
+    @Transactional(REQUIRED)
     User updateUser(String id, UserDTO dto) {
-        User user = users.get(id);
-        if (isNull(user)) {
+        Optional<User> userOpt = findUserById(id, false);
+        if (userOpt.isEmpty()) {
             return null;
         }
+        User user = userOpt.get();
         user.setEmail(dto.getEmail());
         user.setName(dto.getName());
         user.setUpdatedAt(LocalDateTime.now());
         user.setUpdatedBy(SYSTEM_USER);
-        users.put(user.getId(), user);
+        entityManager.persist(user);
         return user;
     }
 
+    @Transactional(REQUIRED)
     User deleteUser(String id) {
-        User user = users.get(id);
-        if (isNull(user)) {
+        Optional<User> userOpt = findUserById(id, false);
+        if (userOpt.isEmpty()) {
             return null;
         }
+        User user = userOpt.get();
         user.setStatus(UserStatus.Deleted);
+        entityManager.persist(user);
         return user;
     }
 

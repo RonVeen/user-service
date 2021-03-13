@@ -1,31 +1,36 @@
 package org.ninjware.binder.model;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import org.ninjaware.binder.rest.UserStatus;
 
+import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 @ToString
+@Entity
+@Table(name = "user",
+        schema = "public",
+        indexes = {
+        @Index(columnList = "id"),
+        @Index(name = "internalId", columnList = "internalId"),
+})
 public class User {
-
-    private String id;
-    private String internalId;
-    private UserStatus status;
-    private String email;
-    private String name;
-    private boolean passwordChangeRequired;
-    private LocalDate memberSince;
-    private LocalDateTime lastLogin;
-    private LocalDateTime createdAt;
-    private String createdBy;
-    private LocalDateTime updatedAt;
-    private String updatedBy;
-
+    @Id @Column(unique = true, updatable = false, nullable = false) private String id;
+    @Column private String internalId;
+    @Enumerated(EnumType.STRING) private UserStatus status;
+    @Column private String email;
+    @Column private String name;
+    @Column private boolean passwordChangeRequired;
+    @Column private LocalDate memberSince;
+    @Column private LocalDateTime lastLogin;
+    @Column private LocalDateTime createdAt;
+    @Column private String createdBy;
+    @Column private LocalDateTime updatedAt;
+    @Column private String updatedBy;
 }

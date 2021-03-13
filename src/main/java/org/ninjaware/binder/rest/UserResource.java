@@ -9,6 +9,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.util.Optional;
 
 import static java.util.Objects.isNull;
 
@@ -35,18 +36,18 @@ public class UserResource {
     @Path("{id}")
     public Response findById(@PathParam("id") String id,
                              @QueryParam("includeDeleted") boolean includeDeleted) {
-        User user = userService.getUserById(id, includeDeleted);
-        if (isNull(user)) {
+        Optional<User> userOpt = userService.findUserById(id, includeDeleted);
+        if (userOpt.isEmpty()) {
             return Response.noContent().build();
         }
-        return Response.ok(user).build();
+        return Response.ok(userOpt.get()).build();
     }
 
     @PUT
     @Path("{id}")
     public Response update(@PathParam("id") String id, UserDTO dto) {
-        User user = userService.getUserById(id, false);
-        if (isNull(user)) {
+        Optional<User> userOpt = userService.findUserById(id, false);
+        if (userOpt.isEmpty()) {
             return Response.noContent().build();
         }
         User updatedUser = userService.updateUser(id, dto);
