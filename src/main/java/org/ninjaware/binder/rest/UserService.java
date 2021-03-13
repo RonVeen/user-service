@@ -11,8 +11,6 @@ import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,9 +27,16 @@ public class UserService {
 
 
     @Transactional(SUPPORTS)
-    Optional<User> findUserById(String id, boolean includDelete) {
-        TypedQuery<User> query = entityManager.createQuery("SELECT u FROM User u WHERE u.id=:id", User.class);
-        query.setParameter("id", id);
+    Optional<User> findUserById(String id, boolean includeDeleted) {
+        TypedQuery<User> query = null;
+        if (includeDeleted) {
+            query = entityManager.createQuery("SELECT u FROM User u WHERE u.id=:id", User.class);
+            query.setParameter("id", id);
+        } else {
+            query = entityManager.createQuery("SELECT u FROM User u WHERE u.id=:id and u.status <> :status", User.class);
+            query.setParameter("id", id);
+            query.setParameter("status", UserStatus.Deleted);
+        }
         return query.getResultStream().findFirst();
     }
 
