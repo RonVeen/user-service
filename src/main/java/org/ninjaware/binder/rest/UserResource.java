@@ -1,5 +1,6 @@
 package org.ninjaware.binder.rest;
 
+import org.ninjware.binder.model.PasswordDTO;
 import org.ninjware.binder.model.User;
 import org.ninjware.binder.model.UserDTO;
 
@@ -59,6 +60,13 @@ public class UserResource {
         User user = userService.createUser(dto);
         URI uri = URI.create("/user/" + user.getId());
         return Response.created(uri).build();
+    }
+
+    @PUT
+    @Path("{id}/pwd")
+    public Response setPassword(@PathParam("id") String id, PasswordDTO dto) {
+        boolean success = userService.setPassword(id, dto.getPassword());
+        return success ? Response.ok().build() : Response.status(Response.Status.NOT_ACCEPTABLE).build();
     }
 
 }
